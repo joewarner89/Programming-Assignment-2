@@ -1,19 +1,91 @@
-# History files
-.Rhistory
-.Rapp.history
+makeVector <- function(x = numeric()) {
+  m <- NULL
+  set <- function(y) {
+    x <<- y
+    m <<- NULL
+  }
+  get <- function() x
+  setmean <- function(mean) m <<- mean
+  getmean <- function() m
+  list(set = set, get = get,
+       setmean = setmean,
+       getmean = getmean)
+}
 
-# Session Data files
-.RData
+# add another function 
+cachemean <- function(x, ...) {
+  m <- x$getmean()
+  if(!is.null(m)) {
+    message("getting cached data")
+    return(m)
+  }
+  data <- x$get()
+  m <- mean(data, ...)
+  x$setmean(m)
+  m
+}
 
-# Example code in package build process
-*-Ex.R
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
+# create the matrix
+makeCacheMatrix <- function(x = matrix()) {
+  
+  inv = NULL
+  set = function (y) {
+    
+    
+    
+    x <<- y
+    inv <<- NULL
+    
+  }
+  get = function() x
+  setinv = function(inverse) inv <<- inverse 
+  getinv = function() inv
+  list(set=set, get=get, setinv=setinv, getinv=getinv)
+}
+  
+  
+cacheSolve <- function(x, ...) {
+  ## @x: output of makeCacheMatrix()
+  ## return: inverse of the original matrix input to makeCacheMatrix()
+  
+  inv = x$getinv()
+  
+  # if the inverse has already been calculated
+  if (!is.null(inv)){
+    # get it from the cache and skips the computation. 
+    message("getting cached data")
+    return(inv)
+  }
+  
+  # otherwise, calculates the inverse 
+  mat.data = x$get()
+  inv = solve(mat.data, ...)
+  
+  # sets the value of the inverse in the cache via the setinv function.
+  x$setinv(inv)
+  
+  return(inv)
+}
+  
+  
+  
+test <- function(mat){
+  ## @mat: an invertible matrix
+  
+  temp = makeCacheMatrix(mat)
+  
+  start.time = Sys.time()
+  cacheSolve(temp)
+  dur = Sys.time() - start.time
+  print(dur)
+  
+  start.time = Sys.time()
+  cacheSolve(temp)
+  dur = Sys.time() - start.time
+  print(dur)
+}
+  set.seed(112)
+  t = rnorm(100)
+  mat1 = matrix(t,nrow = 100, ncol = 100)
+  test(mat1)
+  
